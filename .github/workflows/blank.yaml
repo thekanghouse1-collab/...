@@ -1,0 +1,38 @@
+# File: .github/workflows/macos-long-run.yml
+name: macOS Long Running Workflow
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:  # Allows manual trigger
+
+jobs:
+  long_run:
+    runs-on: macos-12   # Use closest supported macOS version
+    timeout-minutes: 360  # 6 hours max
+
+    steps:
+      # Checkout the repository
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # Install dependencies (example: Homebrew and wget)
+      - name: Install Homebrew and Dependencies
+        run: |
+          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+          brew install wget
+
+      # Example: Long-running command or loop
+      - name: Run Long Task
+        run: |
+          echo "Starting long task..."
+          for i in {1..360}; do
+            echo "Hour $i progress..."
+            sleep 60  # Sleep 1 minute per iteration
+          done
+          echo "Long task finished."
+
+      # Optional: Print macOS version
+      - name: Show macOS Version
+        run: sw_vers
