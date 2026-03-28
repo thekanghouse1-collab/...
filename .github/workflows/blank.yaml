@@ -1,24 +1,31 @@
-# File: .github/workflows/macos-long-run.yml
-name: macOS Long Run Workflow
+# Language: YAML (GitHub Actions workflow)
+name: getmac Workflow
 
-# Allow triggering on push to main branch or manually
-on:
+on: 
   push:
-    branches:
-      - main
-  workflow_dispatch: # Manual trigger
+    branches: [main]
+  workflow_dispatch:
 
 jobs:
-  long_run:
-    runs-on: getmac
-    timeout-minutes: 360 # Maximum 6 hours
-
+  fetch_macs:
+    runs-on: macos-latest  # Change to ubuntu-latest if preferred
+    timeout-minutes: 360    # Handles long-running steps
+    env:
+      GETMAC_API_KEY: ${{ secrets.GETMAC_API_KEY }}
     steps:
-      # Checkout repository code
-      - name: Checkout Code
-        uses: actions/checkout@v3
+      # Step 1: Checkout repository
+      - uses: actions/checkout@v3
 
-      # Configure macOS locale and region to UK
+      # Step 2: Install necessary dependencies
+      - name: Install dependencies
+        run: |
+          # macOS package manager (brew) install
+          brew install jq || true
+          # Python installation for API processing
+          python3 -m pip install --upgrade pip
+          python3 -m pip install requests
+
+      # Step 3: Configure macOS locale (optional for UK settings)
       - name: Configure macOS locale
         run: |
           defaults write NSGlobalDomain AppleLanguages -array "en-GB"
@@ -27,46 +34,22 @@ jobs:
           defaults write NSGlobalDomain AppleMetricUnits -bool true
           killall Finder || true
 
-      # Verify locale
+      # Step 4: Fetch data from getmac.io with retries
+      - name: Fetch getmac.io data
+        run: |
+          set -e  # Halt on errors
+          for i in {1..5}; do
+            response=$(curl -sS -H "Authorization: Bearer $GETMAC_API_KEY" https://getmac.io/api || true)
+            if [ -n "$response" ]; then
+              echo "$response" | jq '.'
+              break
+            fi
+            echo "Attempt $i failed, retrying after $((i*5)) seconds..."
+            sleep $((i*5))
+          done
+        env:
+          GETMAC_API_KEY: ${{ secrets.GETMAC_API_KEY }}
+
+      # Step 5: Optional: Verify locale and environment
       - name: Verify locale settings
         run: locale
-
-      # Set up Python environment
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-
-      # Install example dependencies, if needed
-      - name: Install Dependencies
-        run: |
-          python -m pip install --upgrade pip
-          # Example: install required packages
-          # pip install -r requirements.txt
-
-      # Long-running job with periodic logging every 5 seconds
-      - name: Keep macOS runner alive with heartbeat logs
-        run: |
-          echo "Starting long run task with periodic heartbeat..."
-          # Loop for 720 iterations × 5 seconds = 1 hour; adjust as needed
-          for i in {1..720}
-          do
-            echo "Heartbeat: $(date) – iteration $i"
-            sleep 5
-          done
-          echo "Long run task completed."
-
-      # Additional custom workflow steps
-      - name: Additional Steps
-        run: |
-          echo "Add your main workflow commands here."
-          # Example: build, test, deploy tasks
-          # python main.py
-
-      # Optional: run background heartbeat while main task executes
-      # Uncomment if you want parallel logging
-      # - name: Background Heartbeat
-      #   run: |
-      #     echo "Starting background heartbeat..."
-      #     (while true; do echo "Heartbeat: $(date)"; sleep 5; done) &
-      #     echo "Main tasks running alongside background heartbeat..."
