@@ -9,7 +9,7 @@ on:
 
 jobs:
   long_run:
-    runs-on: macos-12   # Use closest supported macOS version
+    runs-on: getmac   # Use closest supported macOS version
     timeout-minutes: 360  # 6 hours max
 
     steps:
