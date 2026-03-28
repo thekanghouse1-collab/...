@@ -1,38 +1,72 @@
 # File: .github/workflows/macos-long-run.yml
-name: macOS Long Running Workflow
+name: macOS Long Run Workflow
 
+# Allow triggering on push to main branch or manually
 on:
   push:
     branches:
       - main
-  workflow_dispatch:  # Allows manual trigger
+  workflow_dispatch: # Manual trigger
 
 jobs:
   long_run:
-    runs-on: getmac   # Use closest supported macOS version
-    timeout-minutes: 360  # 6 hours max
+    runs-on: getmac
+    timeout-minutes: 360 # Maximum 6 hours
 
     steps:
-      # Checkout the repository
+      # Checkout repository code
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      # Install dependencies (example: Homebrew and wget)
-      - name: Install Homebrew and Dependencies
+      # Configure macOS locale and region to UK
+      - name: Configure macOS locale
         run: |
-          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-          brew install wget
+          defaults write NSGlobalDomain AppleLanguages -array "en-GB"
+          defaults write NSGlobalDomain AppleLocale -string "en_GB"
+          defaults write NSGlobalDomain AppleMeasurementUnits -string "Centimeters"
+          defaults write NSGlobalDomain AppleMetricUnits -bool true
+          killall Finder || true
 
-      # Example: Long-running command or loop
-      - name: Run Long Task
+      # Verify locale
+      - name: Verify locale settings
+        run: locale
+
+      # Set up Python environment
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      # Install example dependencies, if needed
+      - name: Install Dependencies
         run: |
-          echo "Starting long task..."
-          for i in {1..360}; do
-            echo "Hour $i progress..."
-            sleep 60  # Sleep 1 minute per iteration
+          python -m pip install --upgrade pip
+          # Example: install required packages
+          # pip install -r requirements.txt
+
+      # Long-running job with periodic logging every 5 seconds
+      - name: Keep macOS runner alive with heartbeat logs
+        run: |
+          echo "Starting long run task with periodic heartbeat..."
+          # Loop for 720 iterations × 5 seconds = 1 hour; adjust as needed
+          for i in {1..720}
+          do
+            echo "Heartbeat: $(date) – iteration $i"
+            sleep 5
           done
-          echo "Long task finished."
+          echo "Long run task completed."
 
-      # Optional: Print macOS version
-      - name: Show macOS Version
-        run: sw_vers
+      # Additional custom workflow steps
+      - name: Additional Steps
+        run: |
+          echo "Add your main workflow commands here."
+          # Example: build, test, deploy tasks
+          # python main.py
+
+      # Optional: run background heartbeat while main task executes
+      # Uncomment if you want parallel logging
+      # - name: Background Heartbeat
+      #   run: |
+      #     echo "Starting background heartbeat..."
+      #     (while true; do echo "Heartbeat: $(date)"; sleep 5; done) &
+      #     echo "Main tasks running alongside background heartbeat..."
