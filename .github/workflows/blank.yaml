@@ -1,33 +1,55 @@
 # File: .github/workflows/macos-long-run.yml
 name: macOS Long Run Workflow
 
-# Allow triggering on push to main branch or manually
+# Trigger workflow on pushes to main branch or manually
 on:
-push:
-branches:
-- main
-workflow_dispatch: # Manual trigger
+  push:
+    branches:
+      - main
+  workflow_dispatch: # Manual trigger
 
 jobs:
-long_run:
-runs-on: getmac
-timeout-minutes: 360 # Maximum 6 hours
+  long_run:
+    runs-on: macos-latest
+    timeout-minutes: 360 # Maximum of 6 hours
 
-steps:
-# Checkout repository code
-- name: Checkout Code
-uses: actions/checkout@v3
+    steps:
+      # Checkout repository code
+      - name: Checkout Code
+        uses: actions/checkout@v3
 
-# Configure macOS locale and region to UK
-- name: Configure macOS locale
-run: |
-defaults write NSGlobalDomain AppleLanguages -array "en-GB"
-defaults write NSGlobalDomain AppleLocale -string "en_GB"
-defaults write NSGlobalDomain AppleMeasurementUnits -string "Centimeters"
-defaults write NSGlobalDomain AppleMetricUnits -bool true
-killall Finder || true
-# Verify locale
-- name: Verify locale settings
-run: locale
+      # Configure macOS locale and region to UK
+      - name: Configure macOS Locale and Region
+        run: |
+          defaults write NSGlobalDomain AppleLanguages -array "en-GB"
+          defaults write NSGlobalDomain AppleLocale -string "en_GB"
+          defaults write NSGlobalDomain AppleMeasurementUnits -string "Centimeters"
+          defaults write NSGlobalDomain AppleMetricUnits -bool true
+          killall Finder || true
 
-# Set up Python environment
+      # Verify locale settings
+      - name: Verify Locale Settings
+        run: locale
+
+      # Set up Python environment
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+
+      # Install dependencies
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      # Run tests
+      - name: Run Tests
+        run: |
+          if [ -d tests ]; then pytest -v tests/; fi
+
+      # Simulate long-running task
+      - name: Long-Running Task Simulation
+        run: |
+          echo "Simulating a long-running process on macOS..."
+          sleep 60
