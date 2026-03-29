@@ -1,39 +1,41 @@
-# Language: YAML
-name: macOS Long-Run Logger
+# language: YAML
+name: macOS Long-Running Workflow
 
 on:
-  workflow_dispatch:  # Allows manual triggering of the workflow
+  push:
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
-  long_run_job:
+  long_running_job:
     runs-on: macos-latest
-    timeout-minutes: 360 # Sets the maximum job time to 6 hours (360 minutes)
+    # Set job timeout to 6 hours
+    timeout-minutes: 360
     steps:
+
+      # Checkout repository code
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Set up logging directory
-        run: mkdir -p ${{ github.workspace }}/logs
-
-      - name: Run long task with logging
+      # Heartbeat step to prevent idle timeout
+      - name: Keep-Alive Heartbeat
         run: |
-          log_file="${GITHUB_WORKSPACE}/logs/run_log.txt"
-          echo "Starting long-running task at $(date)" >> "$log_file"
-
-          # Run for 6 hours in 1-minute intervals
-          end_time=$(( $(date +%s) + 6 * 60 * 60 ))
-          while [ $(date +%s) -lt $end_time ]; do
-            echo "$(date): Task is still running..." >> "$log_file"
-            sleep 60
+          echo "Starting heartbeat..."
+          end=$((SECONDS + 21600))  # Run for 6 hours (6*3600 seconds)
+          while [ $SECONDS -lt $end ]; do
+            echo "Workflow is still running... $(date)"
+            sleep 5  # Heartbeat interval: 5 seconds
           done
 
-          echo "Completed long-running task at $(date)" >> "$log_file"
+      # Placeholder for main task (replace this with actual commands)
+      - name: Run Main Task
+        run: |
+          echo "Starting main job..."
+          # Simulate long-running task
+          sleep 21595  # Simulate ~6-hour long task minus heartbeat loop safety
+          echo "Main job completed."
 
-      - name: Display log file
-        run: cat ${{ github.workspace }}/logs/run_log.txt
-
-      - name: Upload log artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: long_run_logs
-          path: ${{ github.workspace }}/logs/run_log.txt
+      # Optional: Additional steps (build, test, deploy) can be added here
+      - name: Final Step
+        run: echo "Workflow completed at $(date)"
