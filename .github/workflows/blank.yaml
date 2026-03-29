@@ -1,41 +1,39 @@
-# File: .github/workflows/simulate_school_day.yml
-name: Simulate Full School Day
+name: macOS Long-Run Logger
 
 on:
-  workflow_dispatch:  # Allows manual trigger
+  workflow_dispatch:  # Manual trigger, can also use schedules
 
 jobs:
-  full_school_day:
-    runs-on: ubuntu-latest
-    timeout-minutes: 360  # 6 hours maximum
+  long_run_job:
+    runs-on: macos-latest
+    timeout-minutes: 360  # Maximum runtime: 6 hours
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Simulate school day logging
+      - name: Set up logging directory
+        run: mkdir -p ${{ github.workspace }}/logs
+
+      - name: Run long task with frequent logging
         run: |
-          #!/bin/bash
-          echo "Starting full school day simulation..."
-          
-          # Set total duration in seconds (6 hours = 6*60*60)
-          TOTAL_DURATION=$((6*60*60))
-          INTERVAL=5  # Log every 5 seconds
-          
-          START_TIME=$(date +%s)
-          CURRENT_TIME=$START_TIME
-          
-          # Loop until 6 hours have passed
-          while [ $((CURRENT_TIME - START_TIME)) -lt $TOTAL_DURATION ]; do
-            ELAPSED=$((CURRENT_TIME - START_TIME))
-            HOUR=$(( ELAPSED / 3600 ))
-            MINUTE=$(( (ELAPSED % 3600) / 60 ))
-            SECOND=$(( ELAPSED % 60 ))
-            
-            echo "Time elapsed: ${HOUR}h ${MINUTE}m ${SECOND}s - Logging school activities..."
-            
-            sleep $INTERVAL
-            CURRENT_TIME=$(date +%s)
+          log_file="${GITHUB_WORKSPACE}/logs/run_log.txt"
+          echo "Starting long-running task at $(date)" >> "$log_file"
+
+          end_time=$(( $(date +%s) + 6 * 60 * 60 ))
+
+          while [ $(date +%s) -lt $end_time ]; do
+            echo "$(date): Task is still running..." >> "$log_file"
+            sleep 5  # Log every 5 seconds to keep runner active
           done
-          
-          echo "Simulation complete: Full 6-hour school day concluded."
+
+          echo "Completed long-running task at $(date)" >> "$log_file"
+
+      - name: Display log file
+        run: cat ${{ github.workspace }}/logs/run_log.txt
+
+      - name: Upload log artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: long_run_logs
+          path: ${{ github.workspace }}/logs/run_log.txt
