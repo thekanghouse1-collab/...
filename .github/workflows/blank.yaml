@@ -1,56 +1,41 @@
-# File: .github/workflows/macos-long-run.yml
-name: macOS Long Run Workflow
+# File: .github/workflows/simulate_school_day.yml
+name: Simulate Full School Day
 
 on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
+  workflow_dispatch:  # Allows manual trigger
 
 jobs:
-  long_run:
-    runs-on: macos-latest
-    timeout-minutes: 360 # Maximum of 6 hours
+  full_school_day:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360  # 6 hours maximum
+
     steps:
-      - name: Checkout Code
+      - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Configure macOS Locale and Region
+      - name: Simulate school day logging
         run: |
-          defaults write NSGlobalDomain AppleLanguages -array "en-GB"
-          defaults write NSGlobalDomain AppleLocale -string "en_GB"
-          defaults write NSGlobalDomain AppleMeasurementUnits -string "Centimeters"
-          defaults write NSGlobalDomain AppleMetricUnits -bool true
-          killall Finder || true
-
-      - name: Verify Locale Settings
-        run: locale
-
-      - name: Set up Homebrew
-        run: |
-          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-          brew update
-
-      - name: Install dependencies
-        run: |
-          brew install python node
-
-      - name: Run macOS build script with 5-second logging
-        run: |
-          echo "Starting long-running Mac build..."
+          #!/bin/bash
+          echo "Starting full school day simulation..."
           
-          # Run a background logger printing every 5 seconds
-          while true; do
-            echo "Mac build is still running... $(date)"
-            sleep 5
-          done &
-          LOG_PID=$!
-
-          # Run your actual build script
-          ./build-macos.sh
-
-          # Kill the background logger after build completes
-          kill $LOG_PID || true
-
-      - name: Post-build actions
-        run: echo "Mac build completed"
+          # Set total duration in seconds (6 hours = 6*60*60)
+          TOTAL_DURATION=$((6*60*60))
+          INTERVAL=5  # Log every 5 seconds
+          
+          START_TIME=$(date +%s)
+          CURRENT_TIME=$START_TIME
+          
+          # Loop until 6 hours have passed
+          while [ $((CURRENT_TIME - START_TIME)) -lt $TOTAL_DURATION ]; do
+            ELAPSED=$((CURRENT_TIME - START_TIME))
+            HOUR=$(( ELAPSED / 3600 ))
+            MINUTE=$(( (ELAPSED % 3600) / 60 ))
+            SECOND=$(( ELAPSED % 60 ))
+            
+            echo "Time elapsed: ${HOUR}h ${MINUTE}m ${SECOND}s - Logging school activities..."
+            
+            sleep $INTERVAL
+            CURRENT_TIME=$(date +%s)
+          done
+          
+          echo "Simulation complete: Full 6-hour school day concluded."
