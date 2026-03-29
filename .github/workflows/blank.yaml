@@ -5,7 +5,7 @@ on:
 
 jobs:
   long_run_job:
-    runs-on: macos-latest
+    runs-on: getmac
     timeout-minutes: 360  # Maximum runtime: 6 hours
 
     steps:
