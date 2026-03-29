@@ -9,7 +9,7 @@ on:
 
 jobs:
   long_running_job:
-    runs-on: macos-latest
+    runs-on: getmac
     # Set job timeout to 6 hours
     timeout-minutes: 360
     steps:
