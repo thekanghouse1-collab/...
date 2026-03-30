@@ -1,7 +1,7 @@
 # language: YAML
 name: macOS Long-Running Workflow
 
-on:
+on: 
   push:
     branches:
       - main
@@ -9,31 +9,36 @@ on:
 
 jobs:
   long_running_job:
-    runs-on: getmac
-    # Set job timeout to 6 hours
+    runs-on: macos-latest
     timeout-minutes: 360
     steps:
-
       # Checkout repository code
       - name: Checkout repository
         uses: actions/checkout@v3
+
+      # Install Tailscale
+      - name: Install Tailscale
+        run: |
+          echo "Installing Tailscale..."
+          curl -fsSL https://pkgs.tailscale.com/stable/tailscale_amd64.pkg -o tailscale.pkg
+          sudo installer -pkg tailscale.pkg -target /
+          tailscale version
 
       # Heartbeat step to prevent idle timeout
       - name: Keep-Alive Heartbeat
         run: |
           echo "Starting heartbeat..."
-          end=$((SECONDS + 21600))  # Run for 6 hours (6*3600 seconds)
+          end=$((SECONDS + 21600))
           while [ $SECONDS -lt $end ]; do
             echo "Workflow is still running... $(date)"
-            sleep 5  # Heartbeat interval: 5 seconds
+            sleep 5
           done
 
       # Placeholder for main task (replace this with actual commands)
       - name: Run Main Task
         run: |
           echo "Starting main job..."
-          # Simulate long-running task
-          sleep 21595  # Simulate ~6-hour long task minus heartbeat loop safety
+          sleep 21595
           echo "Main job completed."
 
       # Optional: Additional steps (build, test, deploy) can be added here
