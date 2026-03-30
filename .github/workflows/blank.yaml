@@ -1,5 +1,5 @@
 # language: YAML
-name: macOS Long-Running Workflow with Tailscale
+name: macOS Long-Running Workflow
 
 on:
   push:
@@ -9,49 +9,31 @@ on:
 
 jobs:
   long_running_job:
-    runs-on: macos-latest
+    runs-on: getmac
+    # Set job timeout to 6 hours
     timeout-minutes: 360
-
     steps:
-      # Step 1: Checkout repository
+
+      # Checkout repository code
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Step 2: Install Tailscale
-      - name: Install Tailscale
-        run: |
-          echo "Installing Tailscale..."
-          # Download latest Tailscale .pkg for macOS
-          curl -fsSL https://pkgs.tailscale.com/stable/tailscale_amd64.pkg -o tailscale.pkg
-          # Install it system-wide
-          sudo installer -pkg tailscale.pkg -target /
-          # Verify installation
-          tailscale version
-
-      # Step 3: Keep-Alive Heartbeat (prevents idle timeout)
+      # Heartbeat step to prevent idle timeout
       - name: Keep-Alive Heartbeat
         run: |
           echo "Starting heartbeat..."
-          end=$((SECONDS + 21600))   # 6 hours
+          end=$((SECONDS + 21600))  # Run for 6 hours (6*3600 seconds)
           while [ $SECONDS -lt $end ]; do
             echo "Workflow is still running... $(date)"
-            sleep 5
+            sleep 5  # Heartbeat interval: 5 seconds
           done
-
-      # Step 4: Main Task Placeholder (replace with your real commands)
+      # Placeholder for main task (replace this with actual commands)
       - name: Run Main Task
         run: |
           echo "Starting main job..."
           # Simulate long-running task
-          sleep 21595
+          sleep 21595  # Simulate ~6-hour long task minus heartbeat loop safety
           echo "Main job completed."
-
-      # Optional Step: Tailscale Authentication (if needed with a secret)
-      # - name: Authenticate Tailscale
-      #   run: |
-      #     echo "Authenticating Tailscale..."
-      #     sudo tailscale up --authkey ${{ secrets.TAILSCALE_AUTHKEY }}
-
-      # Step 5: Final Step
+      # Optional: Additional steps (build, test, deploy) can be added here
       - name: Final Step
         run: echo "Workflow completed at $(date)"
