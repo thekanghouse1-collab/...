@@ -29,16 +29,3 @@ jobs:
           echo "Starting main job..."
           sleep 21595
           echo "Main job completed."
-
-      - name: Final Step
-        run: echo "Workflow completed at $(date)"
-
-      # This triggers the next run instantly using your LOOP_PAT token
-      - name: Instant Rerun
-        if: always() # Runs even if the tasks above fail or timeout
-        run: |
-          curl -X POST \
-            -H "Authorization: token ${{ secrets.LOOP_PAT }}" \
-            -H "Accept: application/vnd.github.v3+json" \
-            https://github.com{{ github.repository }}/actions/workflows/loop.yml/dispatches \
-            -d '{"ref":"main"}'
