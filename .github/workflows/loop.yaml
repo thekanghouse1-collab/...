@@ -18,7 +18,7 @@ jobs:
       - name: Keep-Alive Heartbeat
         run: |
           echo "Starting heartbeat..."
-          end=$((SECONDS + 21600))
+          end=$((SECONDS + 86400))
           while [ $SECONDS -lt $end ]; do
             echo "Workflow is still running... $(date)"
             sleep 5
