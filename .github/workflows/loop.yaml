@@ -9,7 +9,7 @@ on:
 jobs:
   long_running_job:
     runs-on: getmac
-    timeout-minutes: 360
+    timeout-minutes: 1440
 
     steps:
       - name: Checkout repository
